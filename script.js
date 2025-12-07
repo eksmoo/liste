@@ -41,7 +41,7 @@ const wishlistItems = [
         image: "https://m.media-amazon.com/images/I/61lJoviB68L._AC_SX679_.jpg",
         link: "https://www.amazon.fr/LANBAOSI-Imitation-Manches-Longues-Protection/dp/B0CQM5J1T6/ref=sr_1_8?dib=eyJ2IjoiMSJ9.4WQlNxQ9ONTMKOv7TXrO_wb20wRALuuRMrmkx49N8rHrjDdnBwiBAmqfUNUQrq6aA0NPpdvasF9uPFdVmhWiv5U5Q6lYzMDGSHaxCY0zfCr4ofIF6sLTtz-nwP4wBcX2ZkZUT_Xh7Jl8vavDs5cP26nEx0fjJI-35ZRWstfiA9HZgaKtfbrQ-D6JO6DzrWeEJf9WZlHqbiIfXXMpRp84pplA-R2GWKzW0kkOrvL7qByfSgyKe-s6L0Vg5McS-k4Y2wls7zix2ggpnyJMP0Cl6_KgHlKr6uchqEJO_lEUDQE.jVe_igI8Vj9fNUugf7ZfTMqvqIhM_mLtJYEM63bPFmY&dib_tag=se&keywords=tshirt%2Bcompression%2Bhomme%2Bmanche%2Blongue&qid=1765066050&sr=8-8&th=1&psc=1",
         category: "Sport",
-        budget: "30-60 EUR",
+        budget: "~30 EUR",
         priority: "Moyenne",
         status: "En attente",
         icon: "fa-running"
@@ -63,7 +63,7 @@ const wishlistItems = [
         image: "https://assets.militaria.pl/assets/Produkty/254052/Spiwor-Snugpak-Sleeper-Extreme-Olive-lewy-1024344-otwarty.jpg",
         link: "https://military.eu/fr/p/snugpak/sac-de-couchage-sleeper-extreme-gauche-snugpak-olive-254052",
         category: "Aventure",
-        budget: "80 EUR et +",
+        budget: "~60 EUR",
         priority: "Haute",
         status: "Nécessaire",
         icon: "fa-campground"
@@ -85,7 +85,7 @@ const wishlistItems = [
         image: "https://m.media-amazon.com/images/I/81awhsmcq9L._AC_SX569_.jpg",
         link: "https://www.amazon.fr/DAddario-EXL115-Nickel-Wound-électriques/dp/B000HP0ND2/ref=asc_df_B000EENCQQ?mcid=aaca593d235f373f9e3f8d7725f9db3a&tag=googshopfr-21&linkCode=df0&hvadid=701508078417&hvpos=&hvnetw=g&hvrand=16107470287020116518&hvpone=&hvptwo=&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=9056593&hvtargid=pla-384987107235&hvocijid=16107470287020116518-B000EENCQQ-&hvexpln=0&th=1",
         category: "Flexible",
-        budget: "Montant Libre",
+        budget: "20 EUR",
         priority: "Haute",
         status: "Nécessaire",
         icon: "fa-gift"
