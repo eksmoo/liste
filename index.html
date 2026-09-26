@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liste Anniversaire — 8 Novembre 2026</title>
+<meta name="description" content="Liste anniversaire — idées cadeaux">
+
+<!-- ============================================================
+     POLICES
+     "Anton" pour le grand titre façon affiche de concert,
+     "Work Sans" pour tout le reste (texte lisible et pro).
+============================================================= -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- ============================================================
+     FIREBASE (pour que la case "je participe" soit visible par
+     TOUT LE MONDE, sur tous les appareils — pas seulement sur le
+     tien). Voir le fichier README.md fourni pour la configuration
+     en 5 minutes (gratuit). Si tu ne configures rien, le site
+     fonctionne quand même, mais les participations ne seront
+     enregistrées que sur l'appareil de chaque visiteur.
+============================================================= -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<style>
+  /* ==========================================================
+     1. TOKENS — palette "loge de concert" : fond quasi noir,
+     accents ambre / magenta comme deux projecteurs qui se
+     croisent sur scène. Coins carrés-arrondis partout.
+  ========================================================== */
+  :root{
+    --bg-void:      #0B0912;   /* fond principal, noir de salle */
+    --bg-stage:     #17121F;   /* surface des cartes */
+    --bg-stage-2:   #1E1830;   /* surface légèrement plus claire (footer, intro) */
+    --line:         rgba(243,239,230,0.10);
+
+    --spot-amber:   #FFB84D;   /* projecteur chaud */
+    --spot-magenta: #FF3B79;   /* projecteur froid/vif */
+    --spot-amber-soft:   rgba(255,184,77,0.28);
+    --spot-magenta-soft: rgba(255,59,121,0.28);
+
+    --ink:          #F3EFE6;   /* texte principal, blanc chaud */
+    --ink-muted:    #B8AFC4;   /* texte secondaire */
+    --ink-faint:    #786F8C;
+
+    --radius-lg: 22px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+
+    --maxw: 1120px;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+
+  body{
+    margin:0;
+    background:var(--bg-void);
+    color:var(--ink);
+    font-family:'Work Sans', system-ui, sans-serif;
+    font-weight:400;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  img{ max-width:100%; display:block; }
+
+  a{ color:inherit; }
+
+  :focus-visible{
+    outline:3px solid var(--spot-amber);
+    outline-offset:3px;
+    border-radius:6px;
+  }
+
+  .wrap{
+    max-width:var(--maxw);
+    margin:0 auto;
+    padding:0 20px;
+  }
+
+  /* ==========================================================
+     2. HEADER — le grand geste visuel de la page : le titre
+     façon lettrage d'affiche de concert, encadré par deux
+     halos de projecteurs qui respirent lentement.
+  ========================================================== */
+  header.hero{
+    position:relative;
+    overflow:hidden;
+    padding: 76px 20px 64px;
+    text-align:center;
+    isolation:isolate;
+    background:
+      radial-gradient(60% 50% at 20% 15%, var(--spot-amber-soft), transparent 60%),
+      radial-gradient(55% 45% at 85% 20%, var(--spot-magenta-soft), transparent 60%),
+      var(--bg-void);
+  }
+
+  /* halos animés — un seul mouvement orchestré, discret */
+  header.hero::before,
+  header.hero::after{
+    content:"";
+    position:absolute;
+    width:60vmax; height:60vmax;
+    border-radius:50%;
+    filter: blur(90px);
+    opacity:0.35;
+    z-index:-1;
+    animation: sway 14s ease-in-out infinite alternate;
+  }
+  header.hero::before{
+    background: var(--spot-amber);
+    top:-30vmax; left:-20vmax;
+  }
+  header.hero::after{
+    background: var(--spot-magenta);
+    bottom:-32vmax; right:-22vmax;
+    animation-delay:-7s;
+  }
+  @keyframes sway{
+    from{ transform:translate(0,0) scale(1); }
+    to{ transform:translate(4vmax,3vmax) scale(1.08); }
+  }
+
+  .hero-eyebrow{
+    display:inline-block;
+    font-size:0.8rem;
+    letter-spacing:0.14em;
+    color:var(--ink-muted);
+    margin-bottom:18px;
+  }
+
+  h1.hero-title{
+    font-family:'Anton', 'Work Sans', sans-serif;
+    font-weight:400;
+    text-transform:uppercase;
+    letter-spacing:0.01em;
+    line-height:0.95;
+    margin:0;
+    font-size: clamp(2.6rem, 9vw, 5.4rem);
+    background: linear-gradient(100deg, var(--spot-amber) 5%, var(--ink) 45%, var(--spot-magenta) 90%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    text-shadow: 0 0 60px rgba(255,184,77,0.20);
+  }
+
+  .hero-date{
+    display:block;
+    margin-top:10px;
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size: clamp(1.1rem, 3.4vw, 1.6rem);
+    color:var(--ink);
+    letter-spacing:0.02em;
+  }
+
+  /* ==========================================================
+     3. INTRO — petit mot pour la famille
+  ========================================================== */
+  section.intro{
+    padding: 44px 20px 8px;
+  }
+  .intro-card{
+    max-width:720px;
+    margin:0 auto;
+    text-align:center;
+    padding: 28px 26px;
+    background: var(--bg-stage-2);
+    border:1px solid var(--line);
+    border-radius: var(--radius-lg);
+  }
+  .intro-card p{
+    margin:0;
+    color:var(--ink-muted);
+    font-size:1.05rem;
+  }
+  .intro-card strong{ color:var(--ink); }
+
+  /* ==========================================================
+     4. GRILLE DE CADEAUX
+  ========================================================== */
+  section.gifts{
+    padding: 48px 20px 30px;
+  }
+  h2.section-title{
+    text-align:center;
+    font-family:'Work Sans', sans-serif;
+    font-weight:800;
+    font-size: clamp(1.4rem, 4vw, 1.9rem);
+    margin: 0 0 34px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  @media (min-width: 620px){
+    .grid{ grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 980px){
+    .grid{ grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* --- Carte cadeau --- */
+  .card{
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    background: var(--bg-stage);
+    border:1px solid var(--line);
+    border-radius: var(--radius-lg);
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+  .card:hover,
+  .card:focus-within{
+    transform: translateY(-4px);
+    border-color: rgba(255,184,77,0.35);
+  }
+
+  /* Le "projecteur" qui suit la souris : un halo radial positionné
+     via les variables --mx / --my mises à jour en JS au mousemove.
+     C'est la signature visuelle demandée : un spot qui arrive
+     sur la carte, comme sur scène. */
+  .card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    opacity:0;
+    transition: opacity 0.35s ease;
+    background: radial-gradient(260px 260px at var(--mx,50%) var(--my,50%),
+                rgba(255,184,77,0.22), rgba(255,59,121,0.14) 45%, transparent 70%);
+    z-index:1;
+  }
+  .card:hover::before,
+  .card:focus-within::before{
+    opacity:1;
+  }
+
+  .card-media{
+    position:relative;
+    z-index:0;
+    width:100%;
+    aspect-ratio: 4 / 3;
+    background:
+      linear-gradient(135deg, rgba(255,184,77,0.10), rgba(255,59,121,0.10)),
+      repeating-linear-gradient(45deg, #1C1626, #1C1626 12px, #201A2C 12px, #201A2C 24px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--ink-faint);
+    font-size:0.85rem;
+    overflow:hidden;
+  }
+  .card-media img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+
+  .card-body{
+    position:relative;
+    z-index:1;
+    padding: 20px 20px 22px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    flex:1;
+  }
+
+  .card-name{
+    margin:0;
+    font-size:1.12rem;
+    font-weight:700;
+    color:var(--ink);
+  }
+
+  .card-desc{
+    margin:0;
+    font-size:0.92rem;
+    color:var(--ink-muted);
+    flex:1;
+  }
+
+  .card-price{
+    font-weight:700;
+    font-size:0.95rem;
+    color:var(--spot-amber);
+  }
+
+  .card-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:4px;
+    padding: 12px 18px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(100deg, var(--spot-amber), var(--spot-magenta));
+    color: #150E1A;
+    font-weight:700;
+    font-size:0.95rem;
+    text-decoration:none;
+    transition: filter 0.2s ease, transform 0.2s ease;
+  }
+  .card-btn:hover{ filter:brightness(1.08); transform:translateY(-1px); }
+
+  /* --- Bloc participation --- */
+  .participate{
+    margin-top:6px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .participate-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .participate input[type="checkbox"]{
+    width:20px; height:20px;
+    accent-color: var(--spot-magenta);
+    border-radius:6px;
+    flex-shrink:0;
+    cursor:pointer;
+  }
+
+  .participate label{
+    font-size:0.92rem;
+    color:var(--ink-muted);
+    cursor:pointer;
+  }
+
+  .participate-name{
+    display:none;
+    width:100%;
+    padding:9px 12px;
+    border-radius: var(--radius-sm);
+    border:1px solid var(--line);
+    background: var(--bg-void);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:0.9rem;
+  }
+  .participate-name::placeholder{ color:var(--ink-faint); }
+
+  .participate-status{
+    font-size:0.88rem;
+    font-weight:600;
+    color:var(--spot-amber);
+    min-height:1.2em;
+  }
+
+  /* ==========================================================
+     5. FOOTER
+  ========================================================== */
+  footer.site-footer{
+    margin-top:40px;
+    padding: 40px 20px 50px;
+    text-align:center;
+    background: var(--bg-stage-2);
+    border-top:1px solid var(--line);
+  }
+  footer.site-footer p{
+    margin:0;
+    color:var(--ink-muted);
+    font-size:0.95rem;
+  }
+  footer.site-footer .heart{ color:var(--spot-magenta); }
+
+  /* Bandeau discret affiché seulement si Firebase n'est pas configuré */
+  .local-mode-banner{
+    display:none;
+    max-width:720px;
+    margin: 0 auto 30px;
+    padding: 12px 16px;
+    background: rgba(255,184,77,0.10);
+    border:1px solid rgba(255,184,77,0.30);
+    border-radius: var(--radius-sm);
+    color: var(--ink-muted);
+    font-size:0.85rem;
+    text-align:center;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    header.hero::before, header.hero::after{ animation:none; }
+    html{ scroll-behavior:auto; }
+    .card{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     1. HEADER
+============================================================= -->
+<header class="hero">
+  <span class="hero-eyebrow">Vous êtes tous invités</span>
+  <h1 class="hero-title">Liste anniversaire</h1>
+  <span class="hero-date">8 novembre 2026</span>
+</header>
+
+<!-- ============================================================
+     2. INTRODUCTION — modifie librement ce texte de bienvenue
+============================================================= -->
+<section class="intro">
+  <div class="intro-card">
+    <p>
+      <strong>Coucou tout le monde !</strong> Voila
+      quelques idées de cadeaux qui me feraient vraiment plaisir pour mon anniversaire ! Pas d'obligation
+      bien sûr, mais si le cœur vous en dit, vous pouvez cocher un cadeau pour
+      indiquer aux autres que vous y participez !
+      Merci à vous !! 🎉
+    </p>
+  </div>
+  <!-- Bandeau visible uniquement si Firebase n'est pas configuré (voir JS plus bas) -->
+  <p class="local-mode-banner" id="localModeBanner">
+    Mode local : les participations ne sont visibles que sur cet appareil.
+    Configure Firebase (voir README.md) pour que tout le monde voie les mêmes cases cochées en temps réel.
+  </p>
+</section>
+
+<!-- ============================================================
+     3. GRILLE DE CADEAUX
+     ------------------------------------------------------------
+     Pour ajouter / modifier un cadeau : duplique un bloc
+     <article class="card" data-gift-id="...">...</article>
+     et modifie les 4 zones indiquées par les commentaires ci-dessous.
+     ⚠️ Chaque cadeau doit avoir un data-gift-id UNIQUE
+     (ex : "gift-01", "gift-02"...) — c'est ce qui permet de
+     sauvegarder sa participation séparément des autres.
+============================================================= -->
+<section class="gifts">
+  <div class="wrap">
+    <h2 class="section-title">Quelques idées qui me feraient plaisir</h2>
+
+    <div class="grid" id="giftGrid">
+
+      <!-- ============== CADEAU 1 ============== -->
+      <article class="card" data-gift-id="gift-01">
+        <div class="card-media">
+               <img src="Clavier.jpg" alt="Clavier pour hacker la NASA"> 
+        </div>
+        <div class="card-body">
+          <!-- Clavier pour hacker la NASA -->
+          <h3 class="card-name">YUNZII IF99 Clavier Mécanique sans Fil avec Écran (noir, en promotion)</h3>
+          <!-- ✏️ DESCRIPTION COURTE -->
+          <p class="card-desc">Pour hacker la NASA avec élégance.</p>
+          <!-- ✏️ PRIX ESTIMÉ -->
+          <p class="card-price">Environ 90 €</p>
+          <!-- 🔗 LIEN DU PRODUIT -->
+          <a class="card-btn" href="https://www.amazon.fr/YUNZII-IF99-Mécanique-Programmable-USB-CGasket/dp/B0DT6MWNHP/ref=sr_1_4?__mk_fr_FR=ÅMÅŽÕÑ&crid=1B2SEDW4EDRX8&dib=eyJ2IjoiMSJ9.pLIF77i-3V8EGLvdpYSc8WA9xPDg4QMHaiW7Vxmjdhii5TBnooPV76yrrY5KGKveEX_PYBptZgBiNaL5gDJ5wBLpjyv4s6uFlIxO_D0eBnKq4MMNld14rgqfkziaE8jewuE23OnXr-VMDiSlOf_Z6rwnLwqDTs0ocbqrn04bMpA-TulnrnZWJ6HRG1qfBpFy.zrf6DrTHQqkBsj1jVcVQN8X1txf2pZ62UI98yUKkoZ8&dib_tag=se&keywords=yunzi%2Bif99&qid=1790339880&s=computers&sprefix=yunzi%2Bif99%2Ccomputers%2C141&sr=1-4&th=1" target="_blank" rel="noopener">Voir le produit</a>
+
+          <!-- Bloc participation — ne pas modifier, géré automatiquement -->
+          <div class="participate">
+            <div class="participate-row">
+              <input type="checkbox" id="check-gift-01">
+              <label for="check-gift-01">Je participe à ce cadeau</label>
+            </div>
+            <input type="text" class="participate-name" placeholder="Ton prénom (optionnel)">
+            <p class="participate-status"></p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ============== CADEAU 2 ============== -->
+      <article class="card" data-gift-id="gift-02">
+        <div class="card-media">
+        <img src="Montre.jpg" alt="Bracelet de montre en cuir"> 
+        </div>
+        <div class="card-body">
+          <h3 class="card-name">Diloy Bracelet montre en cuir bombé, coutures blanches P354</h3>
+          <p class="card-desc">Pour une montre ayant perdu son bracelet, et pour compter chaque seconde de paix que Noémie nous offre en se taisant.</p>
+          <p class="card-price">Environ 15 €</p>
+          <a class="card-btn" href="https://www.amazon.fr/gp/product/B0C24VLBY4/ref=ewc_pr_img_1?smid=A1N8BUL5ZEML0R&th=1&psc=1" target="_blank" rel="noopener">Voir le produit</a>
+
+          <div class="participate">
+            <div class="participate-row">
+              <input type="checkbox" id="check-gift-02">
+              <label for="check-gift-02">Je participe à ce cadeau</label>
+            </div>
+            <input type="text" class="participate-name" placeholder="Ton prénom (optionnel)">
+            <p class="participate-status"></p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ============== CADEAU 3 ============== -->
+      <article class="card" data-gift-id="gift-03">
+        <div class="card-media">
+        <img src="ecran.jpg" alt="Aide financière nouvel écran OLED">  
+        </div>
+        <div class="card-body">
+          <h3 class="card-name">Aide financière nouvel écran OLED</h3>
+          <p class="card-desc">Soutien financier pour l'achat d'un nouvel écran OLED, le 34" à fait son temps il passera bientôt chez un nouveau propriétaire ! Le OLED c'est magique ! </p>
+
+          <div class="participate">
+            <div class="participate-row">
+              <input type="checkbox" id="check-gift-03">
+              <label for="check-gift-03">Je participe à ce cadeau</label>
+            </div>
+            <input type="text" class="participate-name" placeholder="Ton prénom (optionnel)">
+            <p class="participate-status"></p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ============== CADEAU 4 (dupliquer ce bloc pour en ajouter) ============== -->
+      <article class="card" data-gift-id="gift-04">
+        <div class="card-media">
+        <img src="guitare.jpg" alt="Straploks guitare">
+        </div>
+        <div class="card-body">
+          <h3 class="card-name">Dunlop Straplok Dual - Doré</h3>
+          <p class="card-desc">Quand en repet la sangle s'enlève, ça fait peur...</p>
+          <p class="card-price">25 - €</p>
+          <a class="card-btn" href="https://www.amazon.fr/Jim-Dunlop-SLS1033BK-dunlop-sls1503/dp/B000788VVU/ref=sr_1_2?crid=1FDUROEVJBW17&dib=eyJ2IjoiMSJ9.uKQcxa15pBDPFXiycbg3VY4O6QuAW4GjQ9AbdkFHTBolBHrYNaoRCuMdqm0aeTdQHrAD3KERK3g-LUn4o7s6gPEFLXbKLvGqIkjuGMD4K55fjBlltjPhIWAZ6xl7f3ipksoGFVgQlpB_LC3HAB-LB9ITswp7F8DXHlEqzmWl-HBs01HuPsTqgLc77NNDVM1RrElwF1Cr2aOOjFAXzbwWdmKe-fUu2Y311ZgOyG0fUZD53imU5FRV-76bt662cJnFj4iI3Rn8dzMBirYlnMn-u3KVc8x8H_4GMOBYEivieJM.OUQD84cSStUlLdqocxJVQwaIBqjr7aWF5GxQZjQo4KA&dib_tag=se&keywords=strap%2Block%2Bdunlop&qid=1790451428&sprefix=Strap%2Block%2Caps%2C135&sr=8-2&th=1" target="_blank" rel="noopener">Voir le produit</a>
+
+          <div class="participate">
+            <div class="participate-row">
+              <input type="checkbox" id="check-gift-04">
+              <label for="check-gift-04">Je participe à ce cadeau</label>
+            </div>
+            <input type="text" class="participate-name" placeholder="Ton prénom (optionnel)">
+            <p class="participate-status"></p>
+          </div>
+        </div>
+      </article>
+
+      <article class="card" data-gift-id="gift-05">
+        <div class="card-media">
+        <img src="bras.jpg" alt="Aide financière nouvel écran OLED">  
+        </div>
+        <div class="card-body">
+          <h3 class="card-name">HUANUO Support Ecran PC 2 Ecran de 13 à 32 Pouces, Bras pour Écran Pc pour Écrans Plats, Gaming Bras Ecran PC VESA 75x75/100x100mm (Noir)</h3>
+          <p class="card-desc"> Imaginez l'écran OLED reposer délicatement sur ce bras articulé, plus d'excuse pour travailler... </p>
+          <p class="card-price">Environ 50 €</p>
+          <a class="card-btn" href="https://www.amazon.fr/HUANUO-Support-Moniteurs-Ressort-Rotatif/dp/B07ZNGT8K4/ref=sr_1_2_sspa?crid=1PE77VW56HWED&dib=eyJ2IjoiMSJ9.SnM-PtkERuxT3NGITnhST4YalfLSrtngjA--1xq68NUzutKJTCYSLWHQM1t8-X3LSkiaaFmT1aGvxW6rDK7MMSGkVJfUfijX787_eu5rOSIOyTlybq6sCzrvyLxr2F8otHKJbgFf-IBYROmKme6Ixq1O6Zk0JAQEjgEzVATNhehpPxAm3omRv6TjOcExb6daoUBRkn02kh7GGzLMf_Tyg7-tF5_aJbt_cmL2ugTBZEYXcOpyZhXtL8dN-2QXMCoJnPc2DG9b-LYLr6lESOBwJ2byNty-NEdNRLYUJSdPytg.bW6i2EmPCL9rg9MTCaBjXsl15XQJnRXXLNIbgWqEW0o&dib_tag=se&keywords=bras%2Becran%2Bpc%2B2%2Becran&qid=1790451985&sprefix=%2Caps%2C145&sr=8-2-spons&aref=uOFeNtHEqm&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&th=1" target="_blank" rel="noopener">Voir le produit</a>
+          <div class="participate">
+            <div class="participate-row">
+              <input type="checkbox" id="check-gift-05">
+              <label for="check-gift-05">Je participe à ce cadeau</label>
+            </div>
+            <input type="text" class="participate-name" placeholder="Ton prénom (optionnel)">
+            <p class="participate-status"></p>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     4. FOOTER
+============================================================= -->
+<footer class="site-footer">
+  <p>Merci à vous, du fond du cœur, pour votre présence et votre générosité <span class="heart">♥</span></p>
+</footer>
+
+<script>
+/* ================================================================
+   CONFIGURATION FIREBASE
+   ----------------------------------------------------------------
+   Remplace les valeurs ci-dessous par celles de TON propre projet
+   Firebase (gratuit, ~5 min de configuration — voir README.md
+   fourni à côté de ce fichier pour le pas-à-pas complet).
+
+   Tant que ces valeurs restent à "REMPLACE_MOI", le site fonctionne
+   quand même, mais chaque case cochée ne sera visible que sur
+   l'appareil de la personne qui l'a cochée (stockage local).
+================================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyDu-iuoS9Qa1Cz1aZ9GKhg3AC-jKgKMRD4",
+  authDomain: "anniv-f85ad.firebaseapp.com",
+  databaseURL: "https://anniv-f85ad-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "anniv-f85ad",
+  storageBucket: "anniv-f85ad.firebasestorage.app",
+  messagingSenderId: "641245991511",
+  appId: "1:641245991511:web:53270d9b7dc2c5d815c912",
+  measurementId: "G-KW1QPTLFY3"
+};
+
+const isFirebaseConfigured = firebaseConfig.apiKey !== "REMPLACE_MOI";
+
+let db = null;
+if (isFirebaseConfigured) {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+} else {
+  document.getElementById('localModeBanner').style.display = 'block';
+}
+
+/* ----------------------------------------------------------------
+   1) EFFET PROJECTEUR AU SURVOL
+   Met à jour --mx / --my (position de la souris dans la carte)
+   pour que le halo radial du CSS suive le curseur, comme un
+   projecteur qui arrive sur la carte.
+---------------------------------------------------------------- */
+document.querySelectorAll('.card').forEach(card => {
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    card.style.setProperty('--mx', `${x}px`);
+    card.style.setProperty('--my', `${y}px`);
+  });
+});
+
+/* ----------------------------------------------------------------
+   2) GESTION DE LA PARTICIPATION ("Je participe à ce cadeau")
+   - Si Firebase est configuré : lecture/écriture en temps réel,
+     visible instantanément par tous les visiteurs.
+   - Sinon : repli sur localStorage (visible uniquement sur cet
+     appareil), pour que la fonctionnalité reste utilisable.
+---------------------------------------------------------------- */
+function applyState(giftId, state) {
+  const card = document.querySelector(`[data-gift-id="${giftId}"]`);
+  if (!card) return;
+  const checkbox   = card.querySelector('input[type="checkbox"]');
+  const nameInput  = card.querySelector('.participate-name');
+  const statusText = card.querySelector('.participate-status');
+
+  const claimed = !!(state && state.claimed);
+  const name = (state && state.name) ? state.name.trim() : '';
+
+  checkbox.checked = claimed;
+  nameInput.style.display = claimed ? 'block' : 'none';
+  if (claimed && name) {
+    nameInput.value = name;
+    statusText.textContent = `🎉 ${name} participe déjà à ce cadeau !`;
+  } else if (claimed) {
+    statusText.textContent = `🎉 Quelqu'un participe déjà à ce cadeau !`;
+  } else {
+    statusText.textContent = '';
+  }
+}
+
+function saveState(giftId, state) {
+  if (isFirebaseConfigured) {
+    db.ref('gifts/' + giftId).set(state);
+  } else {
+    localStorage.setItem('gift-state-' + giftId, JSON.stringify(state));
+    applyState(giftId, state); // pas d'écouteur temps réel en mode local
+  }
+}
+
+document.querySelectorAll('.card').forEach(card => {
+  const giftId     = card.dataset.giftId;
+  const checkbox   = card.querySelector('input[type="checkbox"]');
+  const nameInput  = card.querySelector('.participate-name');
+
+  // Etat initial en mode local (pas de backend partagé)
+  if (!isFirebaseConfigured) {
+    const saved = localStorage.getItem('gift-state-' + giftId);
+    applyState(giftId, saved ? JSON.parse(saved) : null);
+  } else {
+    // Ecoute en temps réel : toute case cochée par quelqu'un
+    // d'autre se met à jour automatiquement chez tous les visiteurs.
+    db.ref('gifts/' + giftId).on('value', (snapshot) => {
+      applyState(giftId, snapshot.val());
+    });
+  }
+
+  checkbox.addEventListener('change', () => {
+    const state = {
+      claimed: checkbox.checked,
+      name: nameInput.value || ''
+    };
+    saveState(giftId, state);
+    if (checkbox.checked) {
+      nameInput.style.display = 'block';
+      nameInput.focus();
+    }
+  });
+
+  nameInput.addEventListener('change', () => {
+    if (!checkbox.checked) return;
+    saveState(giftId, { claimed: true, name: nameInput.value || '' });
+  });
+});
+</script>
+
+</body>
+</html>
