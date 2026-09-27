@@ -417,17 +417,10 @@
   <div class="intro-card">
     <p>
       <strong>Coucou tout le monde !</strong> Voila
-      quelques idées de cadeaux qui me feraient vraiment plaisir pour mon anniversaire ! Pas d'obligation
-      bien sûr, mais si le cœur vous en dit, vous pouvez cocher un cadeau pour
-      indiquer aux autres que vous y participez !
+      quelques idées de cadeaux qui me feraient vraiment plaisir pour mon anniversaire !
       Merci à vous !! 🎉
     </p>
   </div>
-  <!-- Bandeau visible uniquement si Firebase n'est pas configuré (voir JS plus bas) -->
-  <p class="local-mode-banner" id="localModeBanner">
-    Mode local : les participations ne sont visibles que sur cet appareil.
-    Configure Firebase (voir README.md) pour que tout le monde voie les mêmes cases cochées en temps réel.
-  </p>
 </section>
 
 <!-- ============================================================
@@ -520,128 +513,6 @@
   <p>Merci à vous, du fond du cœur, pour votre présence et votre générosité <span class="heart">♥</span></p>
 </footer>
 
-<script>
-/* ================================================================
-   CONFIGURATION FIREBASE
-   ----------------------------------------------------------------
-   Remplace les valeurs ci-dessous par celles de TON propre projet
-   Firebase (gratuit, ~5 min de configuration — voir README.md
-   fourni à côté de ce fichier pour le pas-à-pas complet).
-
-   Tant que ces valeurs restent à "REMPLACE_MOI", le site fonctionne
-   quand même, mais chaque case cochée ne sera visible que sur
-   l'appareil de la personne qui l'a cochée (stockage local).
-================================================================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyDu-iuoS9Qa1Cz1aZ9GKhg3AC-jKgKMRD4",
-  authDomain: "anniv-f85ad.firebaseapp.com",
-  databaseURL: "https://anniv-f85ad-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "anniv-f85ad",
-  storageBucket: "anniv-f85ad.firebasestorage.app",
-  messagingSenderId: "641245991511",
-  appId: "1:641245991511:web:53270d9b7dc2c5d815c912",
-  measurementId: "G-KW1QPTLFY3"
-};
-
-const isFirebaseConfigured = firebaseConfig.apiKey !== "REMPLACE_MOI";
-
-let db = null;
-if (isFirebaseConfigured) {
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.database();
-} else {
-  document.getElementById('localModeBanner').style.display = 'block';
-}
-
-/* ----------------------------------------------------------------
-   1) EFFET PROJECTEUR AU SURVOL
-   Met à jour --mx / --my (position de la souris dans la carte)
-   pour que le halo radial du CSS suive le curseur, comme un
-   projecteur qui arrive sur la carte.
----------------------------------------------------------------- */
-document.querySelectorAll('.card').forEach(card => {
-  card.addEventListener('mousemove', (e) => {
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    card.style.setProperty('--mx', `${x}px`);
-    card.style.setProperty('--my', `${y}px`);
-  });
-});
-
-/* ----------------------------------------------------------------
-   2) GESTION DE LA PARTICIPATION ("Je participe à ce cadeau")
-   - Si Firebase est configuré : lecture/écriture en temps réel,
-     visible instantanément par tous les visiteurs.
-   - Sinon : repli sur localStorage (visible uniquement sur cet
-     appareil), pour que la fonctionnalité reste utilisable.
----------------------------------------------------------------- */
-function applyState(giftId, state) {
-  const card = document.querySelector(`[data-gift-id="${giftId}"]`);
-  if (!card) return;
-  const checkbox   = card.querySelector('input[type="checkbox"]');
-  const nameInput  = card.querySelector('.participate-name');
-  const statusText = card.querySelector('.participate-status');
-
-  const claimed = !!(state && state.claimed);
-  const name = (state && state.name) ? state.name.trim() : '';
-
-  checkbox.checked = claimed;
-  nameInput.style.display = claimed ? 'block' : 'none';
-  if (claimed && name) {
-    nameInput.value = name;
-    statusText.textContent = `🎉 ${name} participe déjà à ce cadeau !`;
-  } else if (claimed) {
-    statusText.textContent = `🎉 Quelqu'un participe déjà à ce cadeau !`;
-  } else {
-    statusText.textContent = '';
-  }
-}
-
-function saveState(giftId, state) {
-  if (isFirebaseConfigured) {
-    db.ref('gifts/' + giftId).set(state);
-  } else {
-    localStorage.setItem('gift-state-' + giftId, JSON.stringify(state));
-    applyState(giftId, state); // pas d'écouteur temps réel en mode local
-  }
-}
-
-document.querySelectorAll('.card').forEach(card => {
-  const giftId     = card.dataset.giftId;
-  const checkbox   = card.querySelector('input[type="checkbox"]');
-  const nameInput  = card.querySelector('.participate-name');
-
-  // Etat initial en mode local (pas de backend partagé)
-  if (!isFirebaseConfigured) {
-    const saved = localStorage.getItem('gift-state-' + giftId);
-    applyState(giftId, saved ? JSON.parse(saved) : null);
-  } else {
-    // Ecoute en temps réel : toute case cochée par quelqu'un
-    // d'autre se met à jour automatiquement chez tous les visiteurs.
-    db.ref('gifts/' + giftId).on('value', (snapshot) => {
-      applyState(giftId, snapshot.val());
-    });
-  }
-
-  checkbox.addEventListener('change', () => {
-    const state = {
-      claimed: checkbox.checked,
-      name: nameInput.value || ''
-    };
-    saveState(giftId, state);
-    if (checkbox.checked) {
-      nameInput.style.display = 'block';
-      nameInput.focus();
-    }
-  });
-
-  nameInput.addEventListener('change', () => {
-    if (!checkbox.checked) return;
-    saveState(giftId, { claimed: true, name: nameInput.value || '' });
-  });
-});
-</script>
 
 </body>
 </html>
